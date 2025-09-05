@@ -1,0 +1,24 @@
+You are an expert Rust programmer.
+
+You’re given the function’s signature (name, inputs, outputs):
+
+```
+
+{signature}
+
+```
+
+And the full behavioral specification:
+
+```
+
+{prompt}
+
+```
+
+**Task:** Implement the function’s body only. Do not include the signature.
+
+**Output requirements:**
+- Return only valid Rust code for the function body.
+- No markdown, no explanations, no comments — just the body.
+- The code should be directly copy-pasteable into the function, with no edits needed.
