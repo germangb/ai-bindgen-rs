@@ -7,5 +7,5 @@ extern "C" {
 }
 
 fn main() {
-    println!("max(23, 67) = {}", max(32, 67)); // 67
+    println!("max(23, 67) = {}", max(23, 67)); // 67
 }

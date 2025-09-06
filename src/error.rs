@@ -21,9 +21,11 @@ pub enum Error {
 
 impl Error {
     pub fn into_syn<T: ToTokens>(self, tokens: T) -> syn::Error {
-        match self {
-            Error::Syn(err) => err,
-            err => syn::Error::new_spanned(tokens, err),
+        if let Error::Syn(error) = self {
+            // preserve the tokens of the syn Error
+            error
+        } else {
+            syn::Error::new_spanned(tokens, self)
         }
     }
 }

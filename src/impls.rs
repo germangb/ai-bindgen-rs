@@ -1,58 +1,65 @@
-use crate::{Attributes, Error, credentials::Credentials};
+use crate::{Attributes, Error, Transform, credentials::Credentials};
 use openai_api_rust::{
     Auth, Message, OpenAI, Role,
     chat::{ChatApi, ChatBody},
 };
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{ForeignItemFn, Signature};
+use syn::{ForeignItemFn, ItemForeignMod, spanned::Spanned};
 
-pub(crate) fn impl_foreign_item_fn(
-    attr: TokenStream,
-    item: ForeignItemFn,
-) -> Result<TokenStream, Error> {
-    let content = chat_completion(attr, &item.sig)?;
-    let tokens: TokenStream = syn::parse_str(&content)?;
+impl Transform for ItemForeignMod {
+    fn try_transform(self, attr: TokenStream) -> Result<TokenStream, Error> {
+        let ItemForeignMod { items, .. } = self;
 
-    // emit the tokens (ignore warnings since code wont be visible anyway)
-    let ForeignItemFn {
-        attrs, vis, sig, ..
-    } = item;
-    Ok(quote!(#(#attrs)* #[allow(warnings)] #vis # sig { #tokens }))
+        if !attr.is_empty() {
+            Err(Error::Syn(syn::Error::new(
+                attr.span(),
+                "Parameters are not supported in top-level extern block.",
+            )))
+        } else {
+            // emit the inner items only
+            Ok(quote!(#(#items)*))
+        }
+    }
 }
 
-fn chat_completion(attr: TokenStream, sig: &Signature) -> Result<String, Error> {
-    let Attributes {
-        prompt,
-        model,
-        temperature,
-        top_p,
-        presence_penalty,
-        frequency_penalty,
-        max_tokens,
-        ..
-    } = Attributes::new(attr)?;
+impl Transform for ForeignItemFn {
+    fn try_transform(self, attr: TokenStream) -> Result<TokenStream, Error> {
+        let ForeignItemFn {
+            attrs, vis, sig, ..
+        } = self;
 
+        // generate contents
+        let attr = Attributes::new(attr)?;
+        let signature = quote!(#sig).to_string();
+        let tokens: TokenStream = syn::parse_str(&chat_completion(&attr, &signature)?)?;
+
+        // ignore warnings because we cant see the code anyway
+        Ok(quote!(#(#attrs)* #[allow(warnings)] #vis # sig { #tokens }))
+    }
+}
+
+fn chat_completion(attr: &Attributes, signature: &str) -> Result<String, Error> {
     // init openai connection
     let credentials = Credentials::from_env()?;
     let openai = OpenAI::new(Auth::new(&credentials.api_key), &credentials.api_url);
 
     // make the chat request
-    let signature = quote!(#sig).to_string();
-    let prompt = prompt
+    let prompt = attr
+        .prompt
         .as_ref()
         .map(String::as_str)
         .unwrap_or_else(|| "No explanation given, figure it out from the function signature");
     let request = ChatBody {
-        model: model.unwrap_or_else(|| credentials.api_model),
-        max_tokens,
-        temperature,
-        top_p,
+        model: attr.model.clone().unwrap_or_else(|| credentials.api_model),
+        max_tokens: attr.max_tokens,
+        temperature: attr.temperature,
+        top_p: attr.top_p,
         n: None,
         stream: None,
         stop: None,
-        presence_penalty,
-        frequency_penalty,
+        presence_penalty: attr.presence_penalty,
+        frequency_penalty: attr.frequency_penalty,
         logit_bias: None,
         user: None,
         messages: vec![Message {
