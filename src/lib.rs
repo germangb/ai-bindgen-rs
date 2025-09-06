@@ -1,14 +1,14 @@
 extern crate proc_macro;
 
-use crate::{error::Error, utils::Params};
+use crate::{attributes::Attributes, error::Error};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::ItemForeignMod;
 
-mod creds;
+mod attributes;
+mod credentials;
 mod error;
 mod impls;
-mod utils;
 
 /// A processor macro for extern blocks and function items within. The annotated
 /// functions will have their bodies implemented by OpenAI (or comparible)

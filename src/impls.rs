@@ -1,4 +1,4 @@
-use crate::{Error, Params, creds::Credentials};
+use crate::{Attributes, Error, credentials::Credentials};
 use openai_api_rust::{
     Auth, Message, OpenAI, Role,
     chat::{ChatApi, ChatBody},
@@ -22,7 +22,7 @@ pub(crate) fn impl_foreign_item_fn(
 }
 
 fn chat_completion(attr: TokenStream, sig: &Signature) -> Result<String, Error> {
-    let Params {
+    let Attributes {
         prompt,
         model,
         temperature,
@@ -31,7 +31,7 @@ fn chat_completion(attr: TokenStream, sig: &Signature) -> Result<String, Error> 
         frequency_penalty,
         max_tokens,
         ..
-    } = Params::new(attr)?;
+    } = Attributes::new(attr)?;
 
     // init openai connection
     let credentials = Credentials::from_env()?;

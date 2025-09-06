@@ -4,7 +4,7 @@ use syn::{LitFloat, LitInt, LitStr};
 
 /// The parameters of the [ai] macro.
 #[derive(Debug, Default)]
-pub struct Params {
+pub struct Attributes {
     /// The string expression passed to the `prompt` attribute.
     pub prompt: Option<String>,
 
@@ -27,10 +27,10 @@ pub struct Params {
     pub max_tokens: Option<i32>,
 }
 
-impl Params {
+impl Attributes {
     /// Parse the contents of the attribute macro
     pub fn new(attr: TokenStream) -> Result<Self, Error> {
-        let mut params = Params::default();
+        let mut params = Attributes::default();
         let error = params.parse(attr.into());
         if error.is_empty() {
             Ok(params)
@@ -90,7 +90,7 @@ mod test {
     #[test]
     #[ignore]
     fn no_params() {
-        let params = Params::new(quote!()).unwrap();
+        let params = Attributes::new(quote!()).unwrap();
 
         assert_eq!(None, params.model);
         assert_eq!(None, params.prompt);
@@ -99,7 +99,7 @@ mod test {
     #[test]
     #[ignore]
     fn parses_prompt() {
-        let params = Params::new(quote!(prompt = "hello world")).unwrap();
+        let params = Attributes::new(quote!(prompt = "hello world")).unwrap();
 
         assert_eq!(Some("hello world".to_string()), params.prompt);
     }
@@ -107,7 +107,7 @@ mod test {
     #[test]
     #[ignore]
     fn parses_prompt_with_model() {
-        let params = Params::new(quote!(prompt = "hello world", model = "the-model")).unwrap();
+        let params = Attributes::new(quote!(prompt = "hello world", model = "the-model")).unwrap();
 
         assert_eq!(Some("hello world".to_string()), params.prompt);
         assert_eq!(Some("the-model".to_string()), params.model);
@@ -116,7 +116,7 @@ mod test {
     #[test]
     #[ignore]
     fn prompt_is_not_string() {
-        let params = Params::new(quote!(prompt = 42));
+        let params = Attributes::new(quote!(prompt = 42));
 
         assert!(params.is_err());
     }
@@ -124,7 +124,7 @@ mod test {
     #[test]
     #[ignore]
     fn model_is_not_string() {
-        let params = Params::new(quote!(model = 42));
+        let params = Attributes::new(quote!(model = 42));
 
         assert!(params.is_err());
     }
