@@ -1,5 +1,5 @@
 [package]
-name = "ai_bindgen"
+name = "ai-bindgen"
 version = "0.1.0"
 edition = "2024"
 
